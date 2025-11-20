@@ -1,337 +1,243 @@
 <!DOCTYPE html>
-<html lang="uk" data-bs-theme="dark">
+<html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>YouTube AutoUploader — Premium UI</title>
-
-  <!-- Fonts & icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-
-  <!-- styles -->
-  <link href="css/styles.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BeatMart — Telegram Bot Marketplace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <div id="app" class="app-root">
-
-    <!-- Sidebar -->
-    <aside id="sidebar" class="sidebar" aria-label="Primary navigation">
-      <div class="sidebar-inner">
-        <div class="brand-wrap text-center">
-          <div class="brand-mark">YA</div>
-        </div>
-
-        <nav class="sidebar-nav mt-3" role="navigation">
-          <button class="nav-btn active" data-target="#uploads" title="Uploads">
-            <i class="bi bi-upload"></i><span class="nav-label">Uploads</span>
-          </button>
-          <button class="nav-btn" data-target="#accounts" title="Accounts">
-            <i class="bi bi-person-circle"></i><span class="nav-label">Accounts</span>
-          </button>
-          <button class="nav-btn" data-target="#logs" title="Logs">
-            <i class="bi bi-file-text"></i><span class="nav-label">Logs</span>
-          </button>
-          <button class="nav-btn" data-target="#settings" title="Settings">
-            <i class="bi bi-gear"></i><span class="nav-label">Settings</span>
-          </button>
-        </nav>
-
-        <div class="sidebar-footer mt-auto">
-          <button id="notifyBtn" class="btn btn-icon" title="Notifications"><i class="bi bi-bell"></i></button>
-          <button id="logoutSmall" class="btn btn-icon" title="Logout"><i class="bi bi-box-arrow-right"></i></button>
-          <div class="user-mini mt-3"><img src="https://i.pravatar.cc/40" alt="user"></div>
-        </div>
-      </div>
-    </aside>
-
-    <!-- Main -->
-    <div class="main-wrap">
-      <header class="topbar d-flex align-items-center justify-content-between">
-        <div class="d-flex align-items-center gap-3">
-          <button id="sidebarToggle" class="btn btn-icon d-md-none" aria-label="Toggle sidebar"><i class="bi bi-list"></i></button>
-          <h1 class="app-title text-gradient">YouTube AutoUploader</h1>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <input id="searchInput" class="form-control search-input" placeholder="Search uploads..." />
-          <button id="searchBtn" class="icon-btn" title="Search"><i class="bi bi-search"></i></button>
-          <button id="topNotifyBtn" class="icon-btn" title="Notifications"><i class="bi bi-bell"></i></button>
-          <button id="logoutTop" class="btn btn-outline-light btn-sm"><i class="bi bi-box-arrow-right me-1"></i> Logout</button>
-        </div>
-      </header>
-
-      <main class="app-body container-fluid p-4">
-        <div class="row gx-4">
-          <div class="col-xl-8">
-            <div class="glass-card card-large mb-4 dashboard-top">
-              <div class="d-flex justify-content-between align-items-start">
-                <div class="d-flex gap-3 align-items-center">
-                  <div class="card-stack">
-                    <div class="card-mock card-1">STANDARD</div>
-                    <div class="card-mock card-2"></div>
-                  </div>
-                  <div>
-                    <h3 class="mb-1 text-gradient">Welcome back</h3>
-                    <p class="small text-muted">Manage uploads, accounts and realtime logs</p>
-                  </div>
-                </div>
-                <div class="d-flex gap-2 align-items-center">
-                  <button id="newUploadBtn" class="btn btn-gradient" data-bs-toggle="modal" data-bs-target="#uploadModal"><i class="bi bi-plus-circle me-2"></i>New Upload</button>
-                  <button class="btn btn-outline-light btn-sm" onclick="logout()"><i class="bi bi-box-arrow-right"></i></button>
-                </div>
-              </div>
-            </div>
-
-            <div id="uploads" class="glass-card content-card mb-4">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="text-gradient mb-0">Upload Tasks</h4>
-                <div>
-                  <button id="refreshUploadsBtn" class="btn btn-sm btn-outline-light me-2">Refresh</button>
-                  <button class="btn btn-sm btn-gradient" data-bs-toggle="modal" data-bs-target="#uploadModal"><i class="bi bi-plus"></i></button>
-                </div>
-              </div>
-              <div class="table-responsive">
-                <table class="table table-dark table-hover align-middle mb-0">
-                  <thead><tr><th>ID</th><th>Title</th><th>Account</th><th>Status</th><th style="width:220px">Progress</th><th>Created</th><th>Actions</th></tr></thead>
-                  <tbody id="uploadsTableBody"></tbody>
-                </table>
-              </div>
-            </div>
-
-            <div id="accounts" class="glass-card content-card mb-4" style="display:none;">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="text-gradient mb-0">YouTube Accounts</h4>
-                <button id="addAccountBtn" class="btn btn-gradient" data-bs-toggle="modal" data-bs-target="#accountModal"><i class="bi bi-plus-circle me-2"></i>Add Account</button>
-              </div>
-              <div class="row g-3" id="accountsGrid"></div>
-            </div>
-
-            <div id="logs" class="glass-card content-card mb-4" style="display:none;">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="text-gradient mb-0">Application Logs</h4>
-                <div>
-                  <select class="form-select form-select-sm glass-input me-2 d-inline-block" style="width:auto;" id="logLevelFilter">
-                    <option value="">All Levels</option><option value="INFO">Info</option><option value="WARNING">Warning</option><option value="ERROR">Error</option>
-                  </select>
-                  <button id="clearLogsBtn" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i> Clear</button>
-                </div>
-              </div>
-              <div class="log-container" id="logContainer"></div>
-            </div>
-
-            <div id="settings" class="glass-card content-card mb-4" style="display:none;">
-              <h4 class="text-gradient mb-4">Settings</h4>
-              <form id="settingsForm">
-                <div class="row">
-                  <div class="col-md-6">
-                    <div class="mb-3">
-                      <label class="form-label">YouTube API Key</label>
-                      <input type="text" class="form-control glass-input" id="youtubeApiKey">
-                    </div>
-                    <div class="mb-3">
-                      <label class="form-label">2Captcha API Key</label>
-                      <input type="text" class="form-control glass-input" id="captchaApiKey">
-                    </div>
-                  </div>
-                  <div class="col-md-6">
-                    <div class="mb-3">
-                      <label class="form-label">Proxy Settings</label>
-                      <textarea class="form-control glass-input" rows="4" id="proxyList" placeholder="host:port"></textarea>
-                    </div>
-                    <div class="form-check mb-3">
-                      <input class="form-check-input" type="checkbox" id="enableProxy">
-                      <label class="form-check-label" for="enableProxy">Enable Proxy Support</label>
-                    </div>
-                  </div>
-                </div>
-                <button type="submit" class="btn btn-gradient"><i class="bi bi-check-circle me-2"></i>Save Settings</button>
-              </form>
-            </div>
-
+  <div class="page-shell">
+    <header class="hero glassy">
+      <div class="brand">BeatMart <span class="tag">TG ready</span></div>
+      <div class="hero-content">
+        <div>
+          <p class="eyebrow">Boutique catalog for beat sellers</p>
+          <h1>Glassy Telegram storefront for premium beats</h1>
+          <p class="lede">Let customers preview, pick a license and pay. Give producers a place to upload stems, manage orders and keep your Telegram bot in sync.</p>
+          <div class="cta-wrap">
+            <a class="btn btn-primary me-2" href="#market">Browse beats</a>
+            <a class="btn btn-outline" href="#upload">Post your beat</a>
           </div>
-
-          <div class="col-xl-4">
-            <div class="glass-card mb-4 right-widget" id="summaryWidget">
-              <div class="d-flex justify-content-between align-items-start">
-                <h5 class="mb-0 text-gradient">Realtime Stats</h5>
-                <div class="small text-muted">Live</div>
-              </div>
-
-              <div class="mt-3">
-                <canvas id="liveChart" width="400" height="240"></canvas>
-              </div>
-
-              <div class="mt-3 d-flex gap-2 align-items-center">
-                <button class="btn btn-pill btn-gradient">+ Add</button>
-                <div class="avatar-stack">
-                  <img src="https://i.pravatar.cc/40?img=5" alt=""><img src="https://i.pravatar.cc/40?img=6" alt=""><img src="https://i.pravatar.cc/40?img=7" alt="">
-                </div>
-                <div class="ms-auto small text-muted">$570</div>
-              </div>
-            </div>
-
-            <div class="glass-card mb-4 right-widget">
-              <h6 class="text-gradient mb-3">Quick Actions</h6>
-              <div class="d-grid gap-2">
-                <button id="openUploadsQuick" class="btn btn-outline-light">Open Uploads</button>
-                <button id="openAccountsQuick" class="btn btn-outline-light">Manage Accounts</button>
-                <button class="btn btn-gradient" data-bs-toggle="modal" data-bs-target="#uploadModal">Start Upload</button>
-              </div>
-            </div>
-
+          <div class="chips">
+            <span class="chip">Main color #222222</span>
+            <span class="chip">Accent #690000</span>
+            <span class="chip">Glassy UI</span>
           </div>
         </div>
-      </main>
-    </div>
-
-    <!-- LOGIN modal (required — main hidden until login confirmed) -->
-    <div class="modal fade" id="loginModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
-      <div class="modal-dialog modal-sm modal-dialog-centered">
-        <div class="modal-content glass-card border-0 login-window">
-          <div class="modal-body p-4">
-            <h5 class="text-gradient mb-3">Sign in to YouTube AutoUploader</h5>
-            <form id="loginForm">
-              <div class="mb-3">
-                <label class="form-label">Username</label>
-                <input type="text" id="username" class="form-control glass-input" required>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Password</label>
-                <input type="password" id="password" class="form-control glass-input" required>
-              </div>
-              <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" id="rememberMe">
-                <label class="form-check-label" for="rememberMe">Remember me</label>
-              </div>
-              <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-gradient"><i class="bi bi-box-arrow-in-right me-2"></i>Login</button>
-                <button type="button" class="btn btn-outline-light" onclick="showRegister()">Create account</button>
-              </div>
-            </form>
-
-            <form id="registerForm" style="display:none;" class="mt-3">
-              <div class="mb-3">
-                <label class="form-label">Username</label>
-                <input type="text" id="regUsername" class="form-control glass-input" required>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Email</label>
-                <input type="email" id="regEmail" class="form-control glass-input" required>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Password</label>
-                <input type="password" id="regPassword" class="form-control glass-input" required>
-              </div>
-              <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-gradient"><i class="bi bi-person-plus me-2"></i>Register</button>
-                <button type="button" class="btn btn-outline-light" onclick="showLogin()">Back to login</button>
-              </div>
-            </form>
-
+        <div class="hero-widget glassy">
+          <div class="widget-head">
+            <span>Live queue</span>
+            <small>Auto-synced to Telegram bot</small>
+          </div>
+          <div class="timeline" id="liveTimeline"></div>
+          <div class="widget-footer">
+            <div>
+              <p class="mb-1">Average processing</p>
+              <h4>42s</h4>
+            </div>
+            <div>
+              <p class="mb-1">Active buyers</p>
+              <h4>128</h4>
+            </div>
+            <div>
+              <p class="mb-1">Conversion</p>
+              <h4>8.2%</h4>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </header>
 
-    <!-- Upload / Account modals kept (unchanged IDs) -->
-    <div class="modal fade" id="uploadModal" tabindex="-1">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content glass-card border-0">
-          <div class="modal-header border-0">
-            <h5 class="modal-title text-gradient">New Upload Task</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    <section id="market" class="section">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Marketplace</p>
+          <h2>Featured beats with instant licensing</h2>
+        </div>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+          <input type="search" id="searchBeats" class="form-control glass-input" placeholder="Search by title, genre, mood">
+          <select id="filterMood" class="form-select glass-input">
+            <option value="">All moods</option>
+            <option value="dark">Dark</option>
+            <option value="uplifting">Uplifting</option>
+            <option value="melodic">Melodic</option>
+            <option value="drill">Drill</option>
+            <option value="club">Club</option>
+          </select>
+          <button class="btn btn-primary" id="clearFilters">Reset</button>
+        </div>
+      </div>
+      <div id="beatsGrid" class="beats-grid"></div>
+    </section>
+
+    <section class="section" id="tiers">
+      <div class="section-head">
+        <p class="eyebrow">License matrix</p>
+        <h2>Transparent options for every client</h2>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="lic-card glassy">
+            <div class="lic-tag">Most popular</div>
+            <h4>Non-Exclusive MP3</h4>
+            <p class="price">$20</p>
+            <ul>
+              <li>Includes tagged MP3</li>
+              <li>Up to <strong>30k</strong> streams</li>
+              <li>Instant delivery via TG bot</li>
+            </ul>
           </div>
-          <div class="modal-body">
-            <form id="uploadForm" enctype="multipart/form-data">
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label class="form-label">YouTube Account</label>
-                    <select class="form-select glass-input" id="uploadAccount" required><option value="">Select Account</option></select>
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Video Title</label>
-                    <input type="text" class="form-control glass-input" id="uploadTitle" required>
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Privacy</label>
-                    <select class="form-select glass-input" id="uploadPrivacy"><option value="private">Private</option><option value="unlisted">Unlisted</option><option value="public">Public</option></select>
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label class="form-label">Video File</label>
-                    <input type="file" class="form-control glass-input" id="uploadFile" accept="video/*" required>
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Tags</label>
-                    <input type="text" class="form-control glass-input" id="uploadTags" placeholder="gaming, tutorial, fun">
-                  </div>
-                </div>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Description</label>
-                <textarea class="form-control glass-input" rows="4" id="uploadDescription"></textarea>
-              </div>
-            </form>
+        </div>
+        <div class="col-md-4">
+          <div class="lic-card glassy">
+            <h4>Non-Exclusive WAV + FLP</h4>
+            <p class="price">$50</p>
+            <ul>
+              <li>High-res WAV master</li>
+              <li>FLP project included</li>
+              <li>Up to <strong>50k</strong> streams</li>
+            </ul>
           </div>
-          <div class="modal-footer border-0">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-gradient" onclick="submitUpload()"><i class="bi bi-upload me-2"></i>Start Upload</button>
+        </div>
+        <div class="col-md-4">
+          <div class="lic-card glassy premium">
+            <div class="lic-tag">Exclusive</div>
+            <h4>Exclusive Rights</h4>
+            <p class="price">From $150</p>
+            <ul>
+              <li>Stems + FLP, transfer of rights</li>
+              <li>Royalty-free usage</li>
+              <li>Personal delivery flow</li>
+            </ul>
           </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="modal fade" id="accountModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content glass-card border-0">
-          <div class="modal-header border-0">
-            <h5 class="modal-title text-gradient">Add YouTube Account</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+    <section id="upload" class="section two-col">
+      <div class="glassy form-panel">
+        <p class="eyebrow">For producers</p>
+        <h3>Post a beat into the Telegram storefront</h3>
+        <form id="uploadForm" class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Beat title</label>
+            <input required class="form-control glass-input" id="beatTitle" placeholder="Crimson Skyline">
           </div>
-          <div class="modal-body">
-            <form id="accountForm">
-              <div class="mb-3">
-                <label class="form-label">Channel Name</label>
-                <input type="text" class="form-control glass-input" id="channelName" required>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Email</label>
-                <input type="email" class="form-control glass-input" id="channelEmail" required>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Password</label>
-                <input type="password" class="form-control glass-input" id="channelPassword" required>
-              </div>
-              <div class="alert alert-warning"><i class="bi bi-exclamation-triangle me-2"></i>Your credentials will be encrypted and stored securely.</div>
-            </form>
+          <div class="col-md-6">
+            <label class="form-label">Genre</label>
+            <input required class="form-control glass-input" id="beatGenre" placeholder="Trap, Drill, RnB">
           </div>
-          <div class="modal-footer border-0">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button id="submitAccountBtn" type="button" class="btn btn-gradient"><i class="bi bi-plus-circle me-2"></i>Add Account</button>
+          <div class="col-md-4">
+            <label class="form-label">Mood</label>
+            <input class="form-control glass-input" id="beatMood" placeholder="dark, melodic">
           </div>
+          <div class="col-md-4">
+            <label class="form-label">BPM</label>
+            <input class="form-control glass-input" id="beatBpm" placeholder="140">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Exclusive price (from)</label>
+            <input class="form-control glass-input" id="beatExclusive" placeholder="150">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Preview link or file URL</label>
+            <input class="form-control glass-input" id="beatAudio" placeholder="https://.../preview.mp3">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Short notes</label>
+            <textarea class="form-control glass-input" rows="2" id="beatNotes" placeholder="Key, vibe, instruments"></textarea>
+          </div>
+          <div class="col-12 d-flex gap-2">
+            <button class="btn btn-primary" type="submit">Publish to bot</button>
+            <button class="btn btn-outline" type="button" id="saveDraft">Save draft</button>
+          </div>
+        </form>
+      </div>
+      <div class="glassy list-panel">
+        <div class="section-head mb-3">
+          <div>
+            <p class="eyebrow">Orders & clients</p>
+            <h3>Manage purchases from Telegram</h3>
+          </div>
+          <span class="badge bg-danger-soft">Live mirror</span>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-borderless align-middle text-white">
+            <thead>
+              <tr>
+                <th>Buyer</th><th>Beat</th><th>License</th><th>Total</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="ordersTable"></tbody>
+          </table>
         </div>
       </div>
-    </div>
+    </section>
 
+    <section class="section steps">
+      <div class="glassy step-card">
+        <h5>1. Discovery</h5>
+        <p>Customers land via Telegram, preview beats with visualizers and pick a license tier.</p>
+      </div>
+      <div class="glassy step-card">
+        <h5>2. Secure checkout</h5>
+        <p>Checkout happens inside the bot with your payment provider. The web view mirrors everything.</p>
+      </div>
+      <div class="glassy step-card">
+        <h5>3. Delivery & tracking</h5>
+        <p>Licenses and files are delivered instantly. Orders flow into the dashboard for follow-up.</p>
+      </div>
+    </section>
   </div>
 
-  <!-- scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <div class="modal fade" id="checkoutModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content glassy">
+        <div class="modal-header border-0">
+          <h5 class="modal-title">Checkout</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Beat</label>
+            <input class="form-control glass-input" id="checkoutBeat" readonly>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">License</label>
+            <select id="checkoutLicense" class="form-select glass-input">
+              <option value="Non-Exclusive MP3">Non-Exclusive MP3 — $20 (30k streams)</option>
+              <option value="Non-Exclusive WAV">Non-Exclusive WAV + FLP — $50 (50k streams)</option>
+              <option value="Exclusive">Exclusive Rights — from $150 (stems + FLP)</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Buyer handle</label>
+            <input class="form-control glass-input" id="checkoutBuyer" placeholder="@username">
+          </div>
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <p class="mb-0">Sync to Telegram bot</p>
+              <small class="text-muted">Purchase will be mirrored to the bot inbox</small>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="syncToggle" checked>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button class="btn btn-outline" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary" id="confirmCheckout">Complete order</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <!-- existing modules kept -->
-  <script src="js/api.js"></script>
-  <script src="js/websocket.js"></script>
-  <script src="js/components/dashboard.js"></script>
-  <script src="js/components/accounts.js"></script>
-  <script src="js/components/uploads.js"></script>
-  <script src="js/components/logs.js"></script>
-  <script src="js/components/settings.js"></script>
-
-  <!-- new app -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
