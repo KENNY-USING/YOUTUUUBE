@@ -1,354 +1,188 @@
-// app.js — fixes + Chart.js live graph + remember-me + advanced interactions
+const beats = [
+  {
+    title: 'Velvet Night',
+    genre: 'Trap Soul',
+    mood: 'melodic',
+    bpm: 134,
+    exclusiveFrom: 220,
+    audio: 'https://cdn.pixabay.com/download/audio/2022/11/06/audio_9bf43638c4.mp3?filename=lofi-study-112191.mp3',
+    notes: 'Warm pads, sub bass, analog lead',
+  },
+  {
+    title: 'Iron Steps',
+    genre: 'Drill',
+    mood: 'dark',
+    bpm: 144,
+    exclusiveFrom: 180,
+    audio: 'https://cdn.pixabay.com/download/audio/2022/03/10/audio_e5fa449c36.mp3?filename=hip-hop-100-bpm-10996.mp3',
+    notes: 'Heavy 808 slides, UK bounce',
+  },
+  {
+    title: 'Champagne Static',
+    genre: 'Club / Afro',
+    mood: 'club',
+    bpm: 122,
+    exclusiveFrom: 260,
+    audio: 'https://cdn.pixabay.com/download/audio/2022/03/07/audio_460454de68.mp3?filename=disco-120-bpm-10911.mp3',
+    notes: 'Sparkly plucks, dance-ready groove',
+  },
+  {
+    title: 'Crimson Skyline',
+    genre: 'Trap',
+    mood: 'uplifting',
+    bpm: 140,
+    exclusiveFrom: 200,
+    audio: 'https://cdn.pixabay.com/download/audio/2022/10/30/audio_5caa851c61.mp3?filename=hip-hop-112199.mp3',
+    notes: 'Open chords, airy choirs',
+  },
+];
 
-/* ---------- Utilities ---------- */
-function wait(ms){ return new Promise(r=>setTimeout(r, ms)); }
-function formatFileSize(bytes){ if (!bytes && bytes!==0) return '-'; if (bytes===0) return '0 Bytes'; const k=1024; const sizes=['Bytes','KB','MB','GB']; const i=Math.floor(Math.log(bytes)/Math.log(k)); return parseFloat((bytes/Math.pow(k,i)).toFixed(2)) + ' ' + sizes[i]; }
-function formatDuration(seconds){ if (!seconds && seconds!==0) return '-'; const h=Math.floor(seconds/3600); const m=Math.floor((seconds%3600)/60); const s=Math.floor(seconds%60); if(h>0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; return `${m}:${String(s).padStart(2,'0')}`; }
-window.formatFileSize = formatFileSize;
-window.formatDuration = formatDuration;
+const orders = [
+  { buyer: '@sapphire', beat: 'Velvet Night', license: 'Non-Exclusive WAV', total: '$50', status: 'Paid' },
+  { buyer: '@plugworld', beat: 'Iron Steps', license: 'Exclusive', total: '$620', status: 'In escrow' },
+  { buyer: '@clubedit', beat: 'Champagne Static', license: 'Non-Exclusive MP3', total: '$20', status: 'Delivered' },
+];
 
-/* ---------- State ---------- */
-let liveChart = null;
-let liveData = { labels: [], values: [] };
+const licensePrices = {
+  'Non-Exclusive MP3': 20,
+  'Non-Exclusive WAV': 50,
+  'Exclusive': 150,
+};
 
-/* ---------- Chart.js live chart ---------- */
-function initLiveChart() {
-  const ctx = document.getElementById('liveChart');
-  if (!ctx || typeof Chart === 'undefined') return;
-  const ctx2 = ctx.getContext('2d');
-
-  const gradient = ctx2.createLinearGradient(0, 0, 0, 200);
-  gradient.addColorStop(0, 'rgba(255,107,61,0.35)');
-  gradient.addColorStop(1, 'rgba(34,197,94,0.03)');
-
-  const cfg = {
-    type: 'line',
-    data: {
-      labels: liveData.labels,
-      datasets: [{
-        label: 'Uploads / min',
-        data: liveData.values,
-        fill: true,
-        backgroundColor: gradient,
-        borderColor: 'rgba(255,107,61,0.95)',
-        tension: 0.32,
-        pointRadius: 2
-      }]
-    },
-    options: {
-      animation: { duration: 600, easing: 'easeOutCubic' },
-      plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
-      scales: {
-        x: { display: true, grid: { display: false } },
-        y: { display: true, beginAtZero: true, grid: { color: 'rgba(255,255,255,0.03)' } }
-      },
-      maintainAspectRatio: false
-    }
-  };
-
-  liveChart = new Chart(ctx2, cfg);
+function renderTimeline() {
+  const timeline = document.getElementById('liveTimeline');
+  if (!timeline) return;
+  const recent = [
+    'Upload synced from @prodbyclyde',
+    'New order: WAV + FLP — $50',
+    'Exclusive inquiry pending',
+    'Bot payout executed',
+  ];
+  timeline.innerHTML = recent
+    .map((text) => `<div class="item"><span class="dot"></span><div>${text}</div></div>`) 
+    .join('');
 }
 
-function pushLivePoint(value) {
-  const maxPoints = 24;
-  const t = new Date().toLocaleTimeString().replace(/:\d+ /, ' ');
-  liveData.labels.push(t);
-  liveData.values.push(value);
-  if (liveData.labels.length > maxPoints) { liveData.labels.shift(); liveData.values.shift(); }
-  if (liveChart) {
-    liveChart.data.labels = liveData.labels;
-    liveChart.data.datasets[0].data = liveData.values;
-    liveChart.update();
-  }
+function renderBeats() {
+  const grid = document.getElementById('beatsGrid');
+  const term = (document.getElementById('searchBeats')?.value || '').toLowerCase();
+  const mood = document.getElementById('filterMood')?.value || '';
+
+  const filtered = beats.filter((b) => {
+    const matchesMood = !mood || (b.mood || '').toLowerCase().includes(mood);
+    const text = `${b.title} ${b.genre} ${b.mood}`.toLowerCase();
+    const matchesSearch = !term || text.includes(term);
+    return matchesMood && matchesSearch;
+  });
+
+  grid.innerHTML = filtered
+    .map(
+      (b) => `
+      <article class="beat-card glassy">
+        <div class="top-line">
+          <div>
+            <p class="genre">${b.genre}</p>
+            <h4>${b.title}</h4>
+          </div>
+          <button class="btn btn-outline btn-sm" data-buy="${b.title}">Buy</button>
+        </div>
+        <p class="meta">Mood: ${b.mood} • ${b.bpm} BPM</p>
+        <div class="price-row">
+          <span class="badge">MP3 $20</span>
+          <span class="badge">WAV + FLP $50</span>
+          <span class="badge">Exclusive from $${b.exclusiveFrom}</span>
+        </div>
+        <div class="audio-bar" aria-hidden="true"></div>
+        <p class="meta">${b.notes}</p>
+      </article>
+    `,
+    )
+    .join('');
+
+  grid.querySelectorAll('[data-buy]').forEach((btn) => {
+    btn.addEventListener('click', (e) => openCheckout(e.target.getAttribute('data-buy')));
+  });
 }
-window.pushLivePoint = pushLivePoint;
 
-/* ---------- UI wiring ---------- */
-document.addEventListener('DOMContentLoaded', async () => {
-  const sidebar = document.getElementById('sidebar');
-  const sidebarToggle = document.getElementById('sidebarToggle');
-  const navButtons = document.querySelectorAll('.nav-btn');
-  const loginModalEl = document.getElementById('loginModal');
-  const logoutTop = document.getElementById('logoutTop');
-  const logoutSmall = document.getElementById('logoutSmall');
-  const searchInput = document.getElementById('searchInput');
-  const searchBtn = document.getElementById('searchBtn');
-  const notifyBtn = document.getElementById('notifyBtn');
-  const topNotifyBtn = document.getElementById('topNotifyBtn');
-  const addAccountBtn = document.getElementById('addAccountBtn');
-  const submitAccountBtn = document.getElementById('submitAccountBtn');
-  const refreshUploadsBtn = document.getElementById('refreshUploadsBtn');
-  const newUploadBtn = document.getElementById('newUploadBtn');
+function renderOrders() {
+  const table = document.getElementById('ordersTable');
+  if (!table) return;
+  table.innerHTML = orders
+    .map(
+      (o) => `
+      <tr>
+        <td>${o.buyer}</td>
+        <td>${o.beat}</td>
+        <td>${o.license}</td>
+        <td>${o.total}</td>
+        <td><span class="badge bg-danger-soft">${o.status}</span></td>
+      </tr>
+    `,
+    )
+    .join('');
+}
 
-  // entrance animations
-  requestAnimationFrame(()=> {
-    sidebar.classList.add('sidebar-show');
-    document.querySelectorAll('.glass-card').forEach((c,i)=> { c.style.opacity = 0; setTimeout(()=> c.classList.add('fade-in-up'), 100 + i*80); });
+function openCheckout(title) {
+  const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('checkoutModal'));
+  document.getElementById('checkoutBeat').value = title;
+  modal.show();
+}
+
+function addBeat(event) {
+  event.preventDefault();
+  const title = document.getElementById('beatTitle').value.trim();
+  const genre = document.getElementById('beatGenre').value.trim();
+  const mood = document.getElementById('beatMood').value.trim();
+  const bpm = document.getElementById('beatBpm').value.trim();
+  const exclusiveFrom = parseInt(document.getElementById('beatExclusive').value.trim() || '150', 10);
+  const audio = document.getElementById('beatAudio').value.trim();
+  const notes = document.getElementById('beatNotes').value.trim();
+
+  if (!title || !genre) return;
+  beats.unshift({ title, genre, mood, bpm, exclusiveFrom, audio, notes });
+  renderBeats();
+  event.target.reset();
+}
+
+function completeOrder() {
+  const beat = document.getElementById('checkoutBeat').value;
+  const buyer = document.getElementById('checkoutBuyer').value || '@client';
+  const license = document.getElementById('checkoutLicense').value;
+  const total = `$${licensePrices[license] || licensePrices.Exclusive}`;
+  orders.unshift({ buyer, beat, license, total, status: 'Paid' });
+  renderOrders();
+  bootstrap.Modal.getInstance(document.getElementById('checkoutModal'))?.hide();
+}
+
+function wireFilters() {
+  document.getElementById('searchBeats')?.addEventListener('input', renderBeats);
+  document.getElementById('filterMood')?.addEventListener('change', renderBeats);
+  document.getElementById('clearFilters')?.addEventListener('click', () => {
+    document.getElementById('searchBeats').value = '';
+    document.getElementById('filterMood').value = '';
+    renderBeats();
   });
+}
 
-  // sidebar mobile toggle
-  if (sidebarToggle) sidebarToggle.addEventListener('click', ()=> sidebar.classList.toggle('open'));
-  document.addEventListener('click', (e)=> {
-    if (window.innerWidth <= 1000 && sidebar.classList.contains('open')) {
-      const path = e.composedPath();
-      if (!path.includes(sidebar) && !path.includes(sidebarToggle)) sidebar.classList.remove('open');
-    }
+function initDraftButton() {
+  const draftBtn = document.getElementById('saveDraft');
+  draftBtn?.addEventListener('click', () => {
+    draftBtn.textContent = 'Draft saved';
+    draftBtn.disabled = true;
+    setTimeout(() => {
+      draftBtn.textContent = 'Save draft';
+      draftBtn.disabled = false;
+    }, 1600);
   });
+}
 
-  // nav switching
-  navButtons.forEach(btn => {
-    btn.addEventListener('mouseenter', ()=> { btn.style.transform='translateX(4px)'; btn.style.transition='transform .22s'; });
-    btn.addEventListener('mouseleave', ()=> btn.style.transform='');
-    btn.addEventListener('click', ()=> {
-      navButtons.forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      const target = btn.getAttribute('data-target');
-      if (!target) return;
-      document.querySelectorAll('.content-card').forEach(p => p.style.display = 'none');
-      const pane = document.querySelector(target);
-      if (pane) { pane.style.display='block'; pane.classList.remove('fade-in-up'); void pane.offsetWidth; pane.classList.add('fade-in-up'); }
-      if (window.innerWidth <= 1000) sidebar.classList.remove('open');
-    });
-  });
+document.addEventListener('DOMContentLoaded', () => {
+  renderTimeline();
+  renderBeats();
+  renderOrders();
+  wireFilters();
+  initDraftButton();
 
-  // hook buttons (ensure functions exist)
-  if (logoutTop) logoutTop.addEventListener('click', logout);
-  if (logoutSmall) logoutSmall.addEventListener('click', logout);
-
-  // Search
-  function performSearch() {
-    const q = (searchInput?.value || '').trim().toLowerCase();
-    // if uploadsManager has search, call it
-    if (window.uploadsManager && typeof window.uploadsManager.search === 'function') {
-      return window.uploadsManager.search(q);
-    }
-    // fallback: filter table rows
-    const rows = document.querySelectorAll('#uploadsTableBody tr');
-    rows.forEach(r => {
-      const text = r.textContent?.toLowerCase() || '';
-      if (!q || text.includes(q)) r.style.display = '';
-      else r.style.display = 'none';
-    });
-  }
-  if (searchBtn) searchBtn.addEventListener('click', performSearch);
-  if (searchInput) { searchInput.addEventListener('keydown', (e)=> { if (e.key==='Enter') performSearch(); }); }
-
-  // Notifications
-  function showNotifications() {
-    // simple toast
-    const toast = document.createElement('div');
-    toast.className = 'toast align-items-center text-bg-dark border-0';
-    toast.style.position = 'fixed'; toast.style.right = '20px'; toast.style.top = '20px'; toast.style.zIndex = 2000;
-    toast.innerHTML = `<div class="d-flex"><div class="toast-body">No new notifications</div><button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
-    document.body.appendChild(toast);
-    const t = new bootstrap.Toast(toast, { delay: 3000 }); t.show();
-    toast.addEventListener('hidden.bs.toast', ()=> toast.remove());
-  }
-  if (notifyBtn) notifyBtn.addEventListener('click', showNotifications);
-  if (topNotifyBtn) topNotifyBtn.addEventListener('click', showNotifications);
-
-  // Add account
-  if (addAccountBtn) addAccountBtn.addEventListener('click', ()=> {
-    const modal = new bootstrap.Modal(document.getElementById('accountModal')); modal.show();
-  });
-  if (submitAccountBtn) submitAccountBtn.addEventListener('click', async ()=> {
-    // gather inputs
-    const name = document.getElementById('channelName')?.value;
-    const email = document.getElementById('channelEmail')?.value;
-    const pass = document.getElementById('channelPassword')?.value;
-    try {
-      if (window.api && typeof api.addAccount === 'function') {
-        await api.addAccount({name,email,pass});
-      } else {
-        console.warn('api.addAccount not implemented — simulating add');
-      }
-      const modalEl = document.getElementById('accountModal');
-      const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-      modal.hide();
-      if (window.accountsManager && typeof window.accountsManager.loadAccounts === 'function') window.accountsManager.loadAccounts();
-    } catch (err) { alert('Add account failed: ' + (err?.message || err)); }
-  });
-
-  // Refresh uploads
-  if (refreshUploadsBtn) refreshUploadsBtn.addEventListener('click', ()=> { if (window.uploadsManager && typeof window.uploadsManager.loadUploadTasks === 'function') window.uploadsManager.loadUploadTasks(); });
-
-  // quick buttons in right widget
-  document.getElementById('openUploadsQuick')?.addEventListener('click', ()=> document.querySelector('[data-target="#uploads"]')?.click());
-  document.getElementById('openAccountsQuick')?.addEventListener('click', ()=> document.querySelector('[data-target="#accounts"]')?.click());
-
-  // initialize live chart
-  initLiveChart();
-
-  // Hook websockets or api for live data
-  if (window.wsManager) {
-    wsManager.on('stats', (payload)=> { // expect payload.value
-      if (typeof payload?.value === 'number') pushLivePoint(payload.value);
-    });
-    wsManager.on('upload_progress', (d)=> {
-      if (window.uploadsManager && typeof window.uploadsManager.updateUploadProgress === 'function') window.uploadsManager.updateUploadProgress(d.task_id, d.progress, d.status);
-    });
-  } else if (window.api && typeof api.getStats === 'function') {
-    // poll every 5s
-    setInterval(async ()=> {
-      try {
-        const stats = await api.getStats();
-        if (stats && typeof stats.recent === 'number') pushLivePoint(stats.recent);
-      } catch (e) { console.warn('getStats failed', e); }
-    }, 5000);
-  } else {
-    // demo simulated data
-    setInterval(()=> pushLivePoint(Math.floor(Math.random()*30)+1), 3000);
-  }
-
-  // Default pane show
-  document.querySelectorAll('.content-card').forEach(p=>p.style.display='none');
-  document.querySelector('#uploads')?.style && (document.querySelector('#uploads').style.display='block');
-
-  // Modal focus behavior
-  document.querySelectorAll('.modal').forEach(modalEl => {
-    modalEl.addEventListener('shown.bs.modal', ()=> {
-      const first = modalEl.querySelector('input, textarea, select, button'); first?.focus();
-      modalEl.querySelector('.modal-content')?.classList.add('fade-in-up');
-    });
-  });
-
-  /* ---------- Auth flow: do not reveal main until validated ---------- */
-  async function validateTokenAndInit() {
-    const token = localStorage.getItem('token');
-    if (!token) return showLoginModal();
-
-    if (window.api && typeof api.whoami === 'function') {
-      try {
-        const user = await api.whoami();
-        if (!user) return showLoginModal();
-        // load managers
-        if (window.uploadsManager && typeof window.uploadsManager.loadUploadTasks === 'function') window.uploadsManager.loadUploadTasks();
-        if (window.accountsManager && typeof window.accountsManager.loadAccounts === 'function') window.accountsManager.loadAccounts();
-        if (window.logsManager && typeof window.logsManager.loadLogs === 'function') window.logsManager.loadLogs();
-        // success — keep main visible (was already visible in DOM)
-        return;
-      } catch (err) { console.warn('whoami error', err); return showLoginModal(); }
-    } else {
-      // no whoami -> require interactive login
-      return showLoginModal();
-    }
-  }
-
-  function showLoginModal() {
-    const modal = new bootstrap.Modal(loginModalEl, { backdrop:'static', keyboard:false });
-    modal.show();
-    loginModalEl.querySelector('.modal-content')?.classList.add('fade-in-up');
-    // prefill username if remembered
-    const savedUser = localStorage.getItem('remember_user');
-    if (savedUser) document.getElementById('username') && (document.getElementById('username').value = savedUser);
-  }
-
-  // run validation
-  await validateTokenAndInit();
-
-}); // DOMContentLoaded
-
-/* ---------- Login/Register logic with fixes + remember me ---------- */
-document.addEventListener('DOMContentLoaded', function(){
-  const loginModalElement = document.getElementById('loginModal');
-  if (!loginModalElement) return;
-
-  const loginForm = document.getElementById('loginForm');
-  if (loginForm) {
-    loginForm.addEventListener('submit', async function(e){
-      e.preventDefault();
-      const uEl = document.getElementById('username'), pEl = document.getElementById('password'), rm = document.getElementById('rememberMe');
-      const username = uEl ? uEl.value.trim() : '';
-      const password = pEl ? pEl.value : '';
-      if (!username || !password) { alert('Fill username and password'); return; }
-      try {
-        if (window.api && typeof api.login === 'function') {
-          await api.login(username, password);
-        } else {
-          // simulation for dev
-          console.warn('api.login not implemented — simulating login');
-          localStorage.setItem('token','demo-token');
-        }
-        // remember me
-        if (rm && rm.checked) { localStorage.setItem('remember_user', username); }
-        else { localStorage.removeItem('remember_user'); }
-        // hide modal
-        const modalInstance = bootstrap.Modal.getInstance(loginModalElement);
-        if (modalInstance) modalInstance.hide();
-        // load data
-        if (window.uploadsManager && typeof window.uploadsManager.loadUploadTasks === 'function') window.uploadsManager.loadUploadTasks();
-        if (window.accountsManager && typeof window.accountsManager.loadAccounts === 'function') window.accountsManager.loadAccounts();
-        if (window.logsManager && typeof window.logsManager.loadLogs === 'function') window.logsManager.loadLogs();
-        // nice stagger
-        await wait(80);
-        if (typeof window.animateCardsStagger === 'function') window.animateCardsStagger();
-      } catch (err) {
-        console.error('Login failed', err);
-        alert('Login failed: ' + (err?.message || err));
-      }
-    });
-  }
-
-  const registerForm = document.getElementById('registerForm');
-  if (registerForm) {
-    registerForm.addEventListener('submit', async function(e){
-      e.preventDefault();
-      const regUsername = document.getElementById('regUsername')?.value;
-      const regEmail = document.getElementById('regEmail')?.value;
-      const regPassword = document.getElementById('regPassword')?.value;
-      try {
-        if (window.api && typeof api.register === 'function') {
-          await api.register(regUsername, regEmail, regPassword);
-        } else {
-          console.warn('api.register not implemented — simulating register');
-          localStorage.setItem('token','demo-token');
-        }
-        const modalInstance = bootstrap.Modal.getInstance(loginModalElement);
-        if (modalInstance) modalInstance.hide();
-        if (window.uploadsManager && typeof window.uploadsManager.loadUploadTasks === 'function') window.uploadsManager.loadUploadTasks();
-        await wait(80);
-        if (typeof window.animateCardsStagger === 'function') window.animateCardsStagger();
-      } catch (err) { console.error('Registration failed', err); alert('Registration failed: ' + (err?.message || err)); }
-    });
-  }
-
-  // showRegister / showLogin with null-checks
-  window.showRegister = function(){
-    const loginForm = document.getElementById('loginForm');
-    const registerForm = document.getElementById('registerForm');
-    if (!loginForm || !registerForm) return;
-    loginForm.classList.add('fade-out-up');
-    setTimeout(()=>{ loginForm.style.display='none'; registerForm.style.display='block'; registerForm.classList.add('fade-in-up'); }, 280);
-  };
-  window.showLogin = function(){
-    const loginForm = document.getElementById('loginForm');
-    const registerForm = document.getElementById('registerForm');
-    if (!loginForm || !registerForm) return;
-    registerForm.classList.add('fade-out-up');
-    setTimeout(()=>{ registerForm.style.display='none'; loginForm.style.display='block'; loginForm.classList.add('fade-in-up'); }, 280);
-  };
-
-  // close modal animation
-  document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(btn => {
-    btn.addEventListener('click', (e)=> {
-      const modal = btn.closest('.modal');
-      if (!modal) return;
-      modal.classList.add('fade-out-up');
-      setTimeout(()=>{ const instance = bootstrap.Modal.getInstance(modal); if (instance) instance.hide(); modal.classList.remove('fade-out-up'); }, 380);
-    });
-  });
+  document.getElementById('uploadForm')?.addEventListener('submit', addBeat);
+  document.getElementById('confirmCheckout')?.addEventListener('click', completeOrder);
 });
-
-/* ---------- Logout ---------- */
-function logout(){
-  try { if (window.api && typeof api.logout === 'function') api.logout(); } catch(e){ console.warn('api.logout error', e); }
-  localStorage.removeItem('token');
-  // show login modal
-  const loginModalEl = document.getElementById('loginModal');
-  if (loginModalEl) { const m = new bootstrap.Modal(loginModalEl, {backdrop:'static', keyboard:false}); m.show(); loginModalEl.querySelector('.modal-content')?.classList.add('fade-in-up'); }
-  else location.reload();
-}
-
-/* ---------- misc helpers ---------- */
-window.refreshUploads = function(){ if (window.uploadsManager && typeof window.uploadsManager.loadUploadTasks === 'function') window.uploadsManager.loadUploadTasks(); };
-window.clearLogs = function(){ if (window.logsManager && typeof window.logsManager.clearLogs === 'function') return window.logsManager.clearLogs(); const c = document.getElementById('logContainer'); if (c) c.innerHTML=''; };
